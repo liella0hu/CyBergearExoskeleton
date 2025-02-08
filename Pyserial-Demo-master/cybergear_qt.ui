@@ -1,0 +1,852 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>2094</width>
+    <height>975</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QListWidget" name="listWidget">
+   <property name="geometry">
+    <rect>
+     <x>1980</x>
+     <y>10</y>
+     <width>51</width>
+     <height>431</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>control</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>vision</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QStackedWidget" name="stackedWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>2041</width>
+     <height>1051</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="page">
+    <widget class="QCheckBox" name="timer_send_cb">
+     <property name="geometry">
+      <rect>
+       <x>470</x>
+       <y>690</y>
+       <width>141</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>forearm定时发送</string>
+     </property>
+    </widget>
+    <widget class="QGroupBox" name="formGroupBox">
+     <property name="geometry">
+      <rect>
+       <x>230</x>
+       <y>670</y>
+       <width>211</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>forearm电机状态</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout_2">
+      <property name="horizontalSpacing">
+       <number>10</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>10</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
+      <property name="bottomMargin">
+       <number>10</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>当前力矩</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>当前温度</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="forearm_cuurent_torque">
+        <property name="text">
+         <string>喵喵喵</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="EMG_forearm_cuurent_3">
+        <property name="text">
+         <string>喵喵喵</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QGroupBox" name="formGroupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>790</y>
+       <width>221</width>
+       <height>101</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>upperarm电机状态</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout_3">
+      <property name="horizontalSpacing">
+       <number>10</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>10</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
+      <property name="bottomMargin">
+       <number>10</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>当前力矩</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>当前温度</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="upperarm_cuurent_torque">
+        <property name="text">
+         <string>喵喵喵</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="upperarm_current_tem">
+        <property name="text">
+         <string>喵喵喵</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QGroupBox" name="formGroupBox_4">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>400</y>
+       <width>221</width>
+       <height>331</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>2号电机设置</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout_4">
+      <property name="horizontalSpacing">
+       <number>10</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>10</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
+      <property name="bottomMargin">
+       <number>10</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="s1__lb_7">
+        <property name="text">
+         <string>串口选择：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="serial_box"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="s1__lb_8">
+        <property name="text">
+         <string>ID:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="canID_box_2">
+        <item>
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>3</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>5</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="s1__lb_9">
+        <property name="text">
+         <string>运动模式</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="mode_box_2">
+        <item>
+         <property name="text">
+          <string>位置模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>运控模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>速度模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>电流模式</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="s1__lb_10">
+        <property name="text">
+         <string>速度：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="s1__lb_11">
+        <property name="text">
+         <string>位置：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="s1__lb_12">
+        <property name="text">
+         <string>扭矩</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0" colspan="2">
+       <widget class="QPushButton" name="open_button_2">
+        <property name="text">
+         <string>使能电机</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0" colspan="2">
+       <widget class="QPushButton" name="close_button_2">
+        <property name="text">
+         <string>关闭电机</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="speed_doubleSpinBox_2"/>
+      </item>
+      <item row="4" column="1">
+       <widget class="QDoubleSpinBox" name="position_doubleSpinBox_2"/>
+      </item>
+      <item row="5" column="1">
+       <widget class="QDoubleSpinBox" name="torque_doubleSpinBox_2"/>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_3">
+     <property name="geometry">
+      <rect>
+       <x>460</x>
+       <y>760</y>
+       <width>61</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>100</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="s3__send_button">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>740</y>
+       <width>111</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>forearm执行</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="s3__clear_button">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>790</y>
+       <width>111</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>forearm停止</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="checkbox">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>10</y>
+       <width>181</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>检测串口</string>
+     </property>
+     <property name="autoRepeatInterval">
+      <number>100</number>
+     </property>
+     <property name="default">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="s3__send_button_2">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>740</y>
+       <width>111</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>upperarm执行</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="timer_send_cb_2">
+     <property name="geometry">
+      <rect>
+       <x>470</x>
+       <y>720</y>
+       <width>171</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>upperarm定时发送</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="s3__clear_button_2">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>790</y>
+       <width>111</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>upperarm停止</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="dw">
+     <property name="geometry">
+      <rect>
+       <x>530</x>
+       <y>760</y>
+       <width>54</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>ms/次</string>
+     </property>
+    </widget>
+    <widget class="QGroupBox" name="formGroupBox_3">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>70</y>
+       <width>221</width>
+       <height>321</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>1号电机设置</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout">
+      <property name="horizontalSpacing">
+       <number>10</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>10</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
+      <property name="bottomMargin">
+       <number>10</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="s1__lb_13">
+        <property name="text">
+         <string>串口选择：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="serial_selection_box"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="s1__lb_2">
+        <property name="text">
+         <string>ID:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="canID_box">
+        <item>
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>3</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>5</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="s1__lb_3">
+        <property name="text">
+         <string>运动模式</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="mode_box">
+        <item>
+         <property name="text">
+          <string>位置模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>运控模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>速度模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>电流模式</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="s1__lb_4">
+        <property name="text">
+         <string>速度:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="s1__lb_5">
+        <property name="text">
+         <string>位置:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="s1__lb_6">
+        <property name="text">
+         <string>扭矩：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0" colspan="2">
+       <widget class="QPushButton" name="open_button">
+        <property name="text">
+         <string>使能电机</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0" colspan="2">
+       <widget class="QPushButton" name="close_button">
+        <property name="text">
+         <string>关闭电机</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="speed_doubleSpinBox"/>
+      </item>
+      <item row="4" column="1">
+       <widget class="QDoubleSpinBox" name="posision_doubleSpinBox_1"/>
+      </item>
+      <item row="5" column="1">
+       <widget class="QDoubleSpinBox" name="torque_doubleSpinBox_3"/>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="verticalLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>219</x>
+       <y>29</y>
+       <width>911</width>
+       <height>301</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="display_verticalLayout_1"/>
+    </widget>
+    <widget class="QLabel" name="display_label">
+     <property name="geometry">
+      <rect>
+       <x>230</x>
+       <y>10</y>
+       <width>81</width>
+       <height>18</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>显示区域</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="verticalLayoutWidget_2">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>340</y>
+       <width>911</width>
+       <height>301</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="display_verticalLayout_2"/>
+    </widget>
+    <widget class="QWidget" name="verticalLayoutWidget_4">
+     <property name="geometry">
+      <rect>
+       <x>1140</x>
+       <y>340</y>
+       <width>741</width>
+       <height>301</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="display_verticalLayout_4"/>
+    </widget>
+    <widget class="QGroupBox" name="formGroupBox_EMG">
+     <property name="geometry">
+      <rect>
+       <x>1150</x>
+       <y>660</y>
+       <width>501</width>
+       <height>251</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>肌电信号设置</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <property name="leftMargin">
+       <number>10</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
+      <property name="bottomMargin">
+       <number>10</number>
+      </property>
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <item row="2" column="2">
+       <widget class="QDoubleSpinBox" name="speed_doubleSpinBox_3"/>
+      </item>
+      <item row="7" column="2">
+       <widget class="QPushButton" name="close_button_EMG">
+        <property name="text">
+         <string>关闭检测</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QCheckBox" name="open_button_EMG">
+        <property name="text">
+         <string>检测信号</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="s1_serial_EMG">
+        <property name="text">
+         <string>串口选择：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="serial_selection_box_EMG"/>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="s1__lb_15">
+        <property name="text">
+         <string>波特率:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="s1__lb_16">
+        <property name="text">
+         <string>运动模式</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="s1__lb_18">
+        <property name="text">
+         <string>forearm当前值：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLabel" name="s1__lb_17">
+        <property name="text">
+         <string>信号阈值</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QComboBox" name="canID_box_3">
+        <item>
+         <property name="text">
+          <string>115200</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>9600</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="mode_box_3">
+        <item>
+         <property name="text">
+          <string>位置模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>运控模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>速度模式</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>电流模式</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QLabel" name="EMG_upperarm_current">
+        <property name="text">
+         <string>喵喵喵</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="2">
+       <widget class="QLabel" name="s1__lb_19">
+        <property name="text">
+         <string>upperarm当前值：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="forearm_activity">
+        <property name="text">
+         <string>forearm活动程度：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLabel" name="EMG_forearm_cuurent">
+        <property name="text">
+         <string>喵喵喵</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="EMG_forearm_activity">
+        <property name="text">
+         <string>汪汪汪</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="verticalLayoutWidget_3">
+     <property name="geometry">
+      <rect>
+       <x>1140</x>
+       <y>30</y>
+       <width>741</width>
+       <height>301</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="display_verticalLayout_3"/>
+    </widget>
+    <widget class="QCheckBox" name="help_forearm_box">
+     <property name="geometry">
+      <rect>
+       <x>650</x>
+       <y>680</y>
+       <width>141</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>前臂助力模式</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="help_upperarm_box">
+     <property name="geometry">
+      <rect>
+       <x>650</x>
+       <y>720</y>
+       <width>141</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>后臂助力模式</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="page_2"/>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
