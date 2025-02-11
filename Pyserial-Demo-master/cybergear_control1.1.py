@@ -610,3 +610,4 @@ if __name__ == '__main__':
     myshow.show()
     sys.exit(app.exec_())
 # 写到这真累啊
+#。。。
