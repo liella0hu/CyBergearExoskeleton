@@ -71,6 +71,8 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         # 定时器接收数据
 
         self.close_button_EMG.clicked.connect(self.EMG_close)
+
+        self.listWidget_2.currentRowChanged.connect(self.stackedWidget.setCurrentIndex)
     def init_timer(self):
         self.timer_draw = QTimer(self)  # 绘制图像
         self.timer_draw.timeout.connect(self.data_receive_draw)
@@ -192,7 +194,6 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                                             QPushButton:hover {background-color: #d69f9f;}
                                             QPushButton:pressed {background-color: #d69f9f;}""")
         # self.serial_selection_box.setStyleSheet("""QComboBox {background-color: #ee9bb1;border: 2px solid #c0c0c0;border-radius: 5px;""")
-
 
 
 
@@ -529,9 +530,12 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 self.EMG_upperarm_current.setText(str(self.upperarm_EMG.pop(0)))
 
             if len_upperarm_EMG >= 40:
-                data_np = np.array(self.forearm_EMG[-30:])
-                self.forearm_std_dev = np.std(data_np)
+                forearm_data_np = np.array(self.forearm_EMG[-30:])
+                upperarm_data_np = np.array(self.upperarm_EMG[-30:])
+                self.forearm_std_dev = np.std(forearm_data_np)
+                self.upperarm_std_dev = np.std(upperarm_data_np)
                 self.EMG_forearm_activity.setText(str(self.forearm_std_dev))
+                self.EMG_upperarm_activity.setText(str(self.upperarm_std_dev))
             # try:
             self.EMG1_plot_widget.clear()
             self.EMG2_plot_widget.clear()
@@ -562,6 +566,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         前臂助力模式
         打开助力模式定时器
         """
+        self.set_position=self.motor1.result["pos"]
         if self.help_forearm_box.isChecked():
             self.timer_send_cb.setChecked(True)
             self.timer_help_mode.start(200)
@@ -583,24 +588,59 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.timer_help_mode.stop()
 
     def help_mode_Time(self):
+        """
+        助力模式主函数
+        """
         if self.help_forearm_box.isChecked():
             if self.open_button_EMG.isChecked():
-                curren_position = self.motor1.result["pos"]
-                curren_torque = self.motor1.result["torque"]
-                print("curren_position", curren_position)
-                if self.forearm_std_dev >= 200 and curren_torque <= -0.7:
-                    self.speed_doubleSpinBox.setValue(0.3)
-                    set_position = curren_torque + 0.05
-                    if set_position > 3:
-                        set_position = 3
-                    self.posision_doubleSpinBox_1.setValue(set_position)
-                elif self.forearm_std_dev >= 150 and curren_torque >= 0.7:
-                    self.speed_doubleSpinBox.setValue(0.3)
-                    set_position = curren_torque - 0.05
-                    if set_position < 0.5:
-                        set_position = 0.5
-                    self.posision_doubleSpinBox_1.setValue(set_position)
+                curren_position_motor1 = self.motor1.result["pos"]
+                curren_torque_motor1 = self.motor1.result["torque"]
+                # curren_position_motor2 = self.motor2.result["pos"]
+                # curren_torque_motor2 = self.motor2.result["torque"]
+                print("curren_position", curren_position_motor1)
+                """
+                前臂肘关节助力
+                """
+                if self.forearm_std_dev >= 60 and curren_torque_motor1 <= -0.7:
+                    self.speed_doubleSpinBox.setValue(0.5)
+                    self.set_position = curren_position_motor1 + 0.05
+                    if self.set_position > 2.5:
+                        self.set_position = 2.5
+                    self.posision_doubleSpinBox_1.setValue(self.set_position)
+                elif self.forearm_std_dev >= 60 and curren_torque_motor1 >= 0.7:
+                    self.speed_doubleSpinBox.setValue(0.5)
+                    self.set_position = curren_position_motor1 - 0.05
+                    if self.set_position < 0.5:
+                        self.set_position = 0.5
+                    self.posision_doubleSpinBox_1.setValue(self.set_position)
+                # if self.set_position > 2.5:
+                #     self.set_position = 2.5
+                # if self.set_position < 0.5:
+                #     self.set_position = 0.5
+                # self.posision_doubleSpinBox_1.setValue(self.set_position)
+                #
+                # """
+                # 大臂肩关节助力
+                # """
+                # if self.upperarm_std_dev >= 200 and curren_torque_motor2 <= -0.7:
+                #     self.speed_doubleSpinBox_2.setValue(0.23)
+                #     set_position = curren_torque_motor1 + 0.05
+                #     if set_position > 0.9:
+                #         set_position = 0.9
+                #     self.position_doubleSpinBox_2.setValue(set_position)
+                # elif self.forearm_std_dev >= 150 and curren_torque_motor1 >= 0.7:
+                #     self.speed_doubleSpinBox_2.setValue(0.23)
+                #     set_position = curren_torque_motor1 - 0.02
+                #     if set_position < -0.2:
+                #         set_position = -0.2
+                #     self.position_doubleSpinBox_2.setValue(set_position)
         print("help_mode_Time is open", self.posision_doubleSpinBox_1.value())
+
+    def switchPage(self, index):
+        self.stackedWidget.setCurrentIndex(index)
+    def depth_vision(self):
+        ...
+
 
 
 

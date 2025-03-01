@@ -6,33 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2094</width>
+    <width>2111</width>
     <height>975</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QListWidget" name="listWidget">
-   <property name="geometry">
-    <rect>
-     <x>1980</x>
-     <y>10</y>
-     <width>51</width>
-     <height>431</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>control</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>vision</string>
-    </property>
-   </item>
-  </widget>
   <widget class="QStackedWidget" name="stackedWidget">
    <property name="geometry">
     <rect>
@@ -804,6 +784,20 @@
         </property>
        </widget>
       </item>
+      <item row="5" column="2">
+       <widget class="QLabel" name="forearm_activity_5">
+        <property name="text">
+         <string>upperarm活动程度：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="3">
+       <widget class="QLabel" name="EMG_upperarm_activity">
+        <property name="text">
+         <string>汪汪汪</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
     <widget class="QWidget" name="verticalLayoutWidget_3">
@@ -845,6 +839,26 @@
     </widget>
    </widget>
    <widget class="QWidget" name="page_2"/>
+  </widget>
+  <widget class="QListWidget" name="listWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>2060</x>
+     <y>10</y>
+     <width>31</width>
+     <height>111</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>控制</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>视觉</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <resources/>
