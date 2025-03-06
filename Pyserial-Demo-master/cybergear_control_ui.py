@@ -390,7 +390,7 @@ class Ui_Form(object):
         self.open_button_EMG.setText(_translate("Form", "检测信号"))
         self.s1_serial_EMG.setText(_translate("Form", "串口选择："))
         self.s1__lb_15.setText(_translate("Form", "波特率:"))
-        self.s1__lb_16.setText(_translate("Form", "运动模式"))
+        self.s1__lb_16.setText(_translate("Form", "滤波模式"))
         self.s1__lb_18.setText(_translate("Form", "forearm当前值："))
         self.s1__lb_17.setText(_translate("Form", "信号阈值"))
         self.canID_box_3.setItemText(0, _translate("Form", "115200"))

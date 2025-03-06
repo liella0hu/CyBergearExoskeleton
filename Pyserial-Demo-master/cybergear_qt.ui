@@ -693,7 +693,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="s1__lb_16">
         <property name="text">
-         <string>运动模式</string>
+         <string>滤波模式</string>
         </property>
        </widget>
       </item>
