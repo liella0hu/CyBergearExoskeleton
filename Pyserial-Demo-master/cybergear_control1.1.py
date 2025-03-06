@@ -12,6 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from cybergear_control_ui import Ui_Form
 from serial_control_interface import SerialControllerInterface, CmdModes, RunModes
 import pyqtgraph
+from scipy import signal
 
 class EMG_serial_reader(QThread):
     data_ready = pyqtSignal(str)  # 定义一个信号，用于当数据准备好时发送
@@ -22,6 +23,20 @@ class EMG_serial_reader(QThread):
         self.baudrate = baudrate
         self.ser = None  # 串口对象，将在run方法中初始化
         self.running = False  # 线程运行标志
+        SAMPLE_RATE = 1000  # 采样率(Hz)
+        BUFFER_SIZE = 200  # 单次读取样本数
+        WINDOW_SIZE = 200  # 分析窗口大小
+        OVERLAP = 100  # 窗口重叠量
+
+        # 滤波器参数
+        BAND_PASS = (20, 500)  # 带通范围
+        NOTCH_FREQ = 50
+        # self.b, self.a = signal.butter(4, [BAND_PASS[0] / (SAMPLE_RATE / 2), BAND_PASS[1] / (SAMPLE_RATE / 2)],btype='bandpass')
+        #
+        # # 陷波滤波器
+        # freqs = np.array([NOTCH_FREQ - 2, NOTCH_FREQ + 2])
+        # self.notch_b, self.notch_a = signal.iirfilter(4,
+        #                                               freqs / (SAMPLE_RATE / 2), btype='bandstop')
 
     def run(self):
         self.running = True
@@ -39,6 +54,15 @@ class EMG_serial_reader(QThread):
 
     def stop(self):
         self.running = False  # 设置运行标志为False，以退出循环
+
+    def EMGProcessor(self, data):
+
+        filtered = signal.filtfilt(self.b, self.a, data)
+
+        # 陷波滤波
+        filtered = signal.filtfilt(self.notch_b, self.notch_a, filtered)
+
+
 class CybergearControl(QtWidgets.QWidget, Ui_Form):
     def __init__(self):
         super(CybergearControl, self).__init__()
@@ -66,6 +90,9 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
 
         self.help_forearm_box.stateChanged.connect(self.help_forearm)
         self.help_upperarm_box.stateChanged.connect(self.help_upperarm)
+
+        self.passivity_help_forearm_box.stateChanged.connect(self.passivity_help_forearm)
+        self.passivity_help_upperarm_box.stateChanged.connect(self.passivity_help_upperarm)
         # self.timer_send_cb.stateChanged.connect(self.data_send_timer_1)
         # self.timer_send_cb_2.stateChanged.connect(self.data_send_timer_1)
         # 定时器接收数据
@@ -563,10 +590,10 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
 
     def help_forearm(self):
         """
-        前臂助力模式
+        前臂半主动助力模式
         打开助力模式定时器
         """
-        self.set_position=self.motor1.result["pos"]
+        self.set_position_forearm=self.motor1.result["pos"]
         if self.help_forearm_box.isChecked():
             self.timer_send_cb.setChecked(True)
             self.timer_help_mode.start(200)
@@ -574,11 +601,13 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.timer_send_cb.setChecked(False)
         if not self.help_forearm_box.isChecked() and not self.help_upperarm_box.isChecked():
             self.timer_help_mode.stop()
+
     def help_upperarm(self):
         """
-        后臂助力模式
+        后臂半主动助力模式
         打开助力模式定时器
         """
+        self.set_position_upperarm = self.motor1.result["pos"]
         if self.help_upperarm_box.isChecked():
             self.timer_send_cb_2.setChecked(True)
             self.timer_help_mode.start(200)
@@ -587,11 +616,32 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         if not self.help_upperarm_box.isChecked() and not self.help_forearm_box.isChecked():
             self.timer_help_mode.stop()
 
+    def passivity_help_forearm(self):
+        self.passivity_set_position_forearm = 0.8
+        if self.passivity_help_forearm_box.isChecked():
+            self.timer_send_cb.setChecked(True)
+            self.timer_help_mode.start(200)
+        if not self.passivity_help_forearm_box.isChecked():
+            self.timer_send_cb.setChecked(False)
+        if not self.passivity_help_forearm_box.isChecked() and not self.passivity_help_upperarm_box.isChecked():
+            self.timer_help_mode.stop()
+
+    def passivity_help_upperarm(self):
+        self.passivity_set_position_upperarm = 0.1
+        if self.passivity_help_upperarm_box.isChecked():
+            self.timer_send_cb.setChecked(True)
+            self.timer_help_mode.start(200)
+        if not self.passivity_help_upperarm_box.isChecked():
+            self.timer_send_cb.setChecked(False)
+        if not self.passivity_help_upperarm_box.isChecked() and not self.passivity_help_upperarm_box.isChecked():
+            self.timer_help_mode.stop()
+
+
     def help_mode_Time(self):
-        """
-        助力模式主函数
-        """
         if self.help_forearm_box.isChecked():
+            """
+            助力模式主函数，半主动
+            """
             if self.open_button_EMG.isChecked():
                 curren_position_motor1 = self.motor1.result["pos"]
                 curren_torque_motor1 = self.motor1.result["torque"]
@@ -603,37 +653,70 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 """
                 if self.forearm_std_dev >= 60 and curren_torque_motor1 <= -0.7:
                     self.speed_doubleSpinBox.setValue(0.5)
-                    self.set_position = curren_position_motor1 + 0.05
-                    if self.set_position > 2.5:
-                        self.set_position = 2.5
-                    self.posision_doubleSpinBox_1.setValue(self.set_position)
+                    self.set_position_forearm = curren_position_motor1 + 0.05
+                    if self.set_position_forearm > 2.5:
+                        self.set_position_forearm = 2.5
+                    self.posision_doubleSpinBox_1.setValue(self.set_position_forearm)
                 elif self.forearm_std_dev >= 60 and curren_torque_motor1 >= 0.7:
                     self.speed_doubleSpinBox.setValue(0.5)
-                    self.set_position = curren_position_motor1 - 0.05
-                    if self.set_position < 0.5:
-                        self.set_position = 0.5
-                    self.posision_doubleSpinBox_1.setValue(self.set_position)
-                # if self.set_position > 2.5:
-                #     self.set_position = 2.5
-                # if self.set_position < 0.5:
-                #     self.set_position = 0.5
-                # self.posision_doubleSpinBox_1.setValue(self.set_position)
-                #
-                # """
-                # 大臂肩关节助力
-                # """
-                # if self.upperarm_std_dev >= 200 and curren_torque_motor2 <= -0.7:
-                #     self.speed_doubleSpinBox_2.setValue(0.23)
-                #     set_position = curren_torque_motor1 + 0.05
-                #     if set_position > 0.9:
-                #         set_position = 0.9
-                #     self.position_doubleSpinBox_2.setValue(set_position)
-                # elif self.forearm_std_dev >= 150 and curren_torque_motor1 >= 0.7:
-                #     self.speed_doubleSpinBox_2.setValue(0.23)
-                #     set_position = curren_torque_motor1 - 0.02
-                #     if set_position < -0.2:
-                #         set_position = -0.2
-                #     self.position_doubleSpinBox_2.setValue(set_position)
+                    self.set_position_forearm = curren_position_motor1 - 0.05
+                    if self.set_position_forearm < 0.5:
+                        self.set_position_forearm = 0.5
+                    self.posision_doubleSpinBox_1.setValue(self.set_position_forearm)
+
+            if self.help_upperarm_box.isChecked():
+                """
+                大臂肩关节助力
+                """
+                if self.open_button_EMG.isChecked():
+                    curren_position_motor2 = self.motor1.result["pos"]
+                    curren_torque_motor2 = self.motor1.result["torque"]
+                    # curren_position_motor2 = self.motor2.result["pos"]
+                    # curren_torque_motor2 = self.motor2.result["torque"]
+                    print("curren_position", curren_position_motor2)
+                    if self.upperarm_std_dev >= 200 and curren_torque_motor2 <= -0.7:
+                        self.speed_doubleSpinBox_2.setValue(0.23)
+                        set_position_upperarm = curren_torque_motor1 + 0.05
+                        if set_position_upperarm > 0.9:
+                            set_position_upperarm = 0.9
+                        self.position_doubleSpinBox_2.setValue(set_position_upperarm)
+                    elif self.forearm_std_dev >= 150 and curren_torque_motor1 >= 0.7:
+                        self.speed_doubleSpinBox_2.setValue(0.23)
+                        set_position_upperarm = curren_torque_motor1 - 0.02
+                        if set_position_upperarm < -0.2:
+                            set_position_upperarm = -0.2
+                        self.position_doubleSpinBox_2.setValue(set_position_upperarm)
+
+        if self.passivity_help_forearm_box.isChecked():
+            """
+            小臂肘关节助力
+            被动模式
+            """
+            curren_position_motor1 = self.motor1.result["pos"]
+            curren_torque_motor1 = self.motor1.result["torque"]
+            self.speed_doubleSpinBox.setValue(0.4)
+            # set_position_forearm = 0.8
+            if 0.75 <= curren_position_motor1 <= 0.85:
+                self.passivity_set_position_forearm = 2.1
+            if 2.05 <= curren_position_motor1 <= 2.15:
+                self.passivity_set_position_forearm = 0.7
+            self.posision_doubleSpinBox_1.setValue(self.passivity_set_position_forearm)
+
+        if self.passivity_help_upperarm_box.isChecked():
+            """
+            大大臂肩关节助力
+            被动模式
+            """
+            curren_position_motor2 = self.motor2.result["pos"]
+            curren_torque_motor2 = self.motor2.result["torque"]
+            self.speed_doubleSpinBox_2.setValue(0.4)
+            # set_position_forearm = 0.8
+            if 0.05 <= curren_position_motor2 <= 0.15:
+                self.passivity_set_position_upperarm = 1.4
+            if 1.35 <= curren_position_motor2 <= 1.45:
+                self.passivity_set_position_upperarm = 0.1
+            self.position_doubleSpinBox_2.setValue(self.passivity_set_position_upperarm)
+
         print("help_mode_Time is open", self.posision_doubleSpinBox_1.value())
 
     def switchPage(self, index):

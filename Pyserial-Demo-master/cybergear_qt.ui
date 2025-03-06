@@ -16,7 +16,7 @@
   <widget class="QStackedWidget" name="stackedWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>20</x>
      <y>10</y>
      <width>2041</width>
      <height>1051</height>
@@ -657,7 +657,7 @@
        <number>10</number>
       </property>
       <item row="2" column="2">
-       <widget class="QDoubleSpinBox" name="speed_doubleSpinBox_3"/>
+       <widget class="QDoubleSpinBox" name="speed_doubleSpinBox_EMG"/>
       </item>
       <item row="7" column="2">
        <widget class="QPushButton" name="close_button_EMG">
@@ -816,12 +816,12 @@
       <rect>
        <x>650</x>
        <y>680</y>
-       <width>141</width>
+       <width>181</width>
        <height>41</height>
       </rect>
      </property>
      <property name="text">
-      <string>前臂助力模式</string>
+      <string>前臂助力模式半主动</string>
      </property>
     </widget>
     <widget class="QCheckBox" name="help_upperarm_box">
@@ -829,12 +829,38 @@
       <rect>
        <x>650</x>
        <y>720</y>
-       <width>141</width>
+       <width>171</width>
        <height>41</height>
       </rect>
      </property>
      <property name="text">
-      <string>后臂助力模式</string>
+      <string>后臂助力模式半主动</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="passivity_help_forearm_box">
+     <property name="geometry">
+      <rect>
+       <x>850</x>
+       <y>680</y>
+       <width>181</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>前臂助力模式被动</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="passivity_help_upperarm_box">
+     <property name="geometry">
+      <rect>
+       <x>850</x>
+       <y>720</y>
+       <width>181</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>后臂助力模式被动</string>
      </property>
     </widget>
    </widget>
