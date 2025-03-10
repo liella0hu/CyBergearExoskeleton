@@ -210,7 +210,7 @@ class SerialControllerInterface:
             # 接收数据帧
             data = self.serial.readlines() 
             length = len(data)
-            print("write_single_param original data", data)
+            # print("write_single_param original data", data)
             if length == 2 and  len(data[length-1].hex()) >= 20:
                 # print("接收到read_param的数据帧:", data[length-1].hex())
                 return self._parse_received_msg(data[length-1], "ba")
