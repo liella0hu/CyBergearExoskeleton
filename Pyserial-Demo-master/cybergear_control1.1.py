@@ -20,6 +20,7 @@ from collections import deque
 class EMG_serial_reader(QThread):
     # data_ready = pyqtSignal(str)  # 定义一个信号，用于当数据准备好时发送
     data_ready = pyqtSignal(dict)
+
     def __init__(self, port, baudrate):
         super().__init__()
         self.port = port
@@ -33,20 +34,23 @@ class EMG_serial_reader(QThread):
         self.WINDOW_SIZE = 200  # 分析窗口大小(ms)
         THRESHOLD = 0.2  # 肌肉激活阈值
 
-        self.buffer_forearm = deque(maxlen=int(SAMPLE_RATE * 1.5))  # 1.5秒缓存
-        self.buffer_upperarm = deque(maxlen=int(SAMPLE_RATE * 1.5))  # 1.5秒缓存
+        self.forearm_data_np = []
+        self.upperarm_data_np = []  # deque(maxlen=int(SAMPLE_RATE * 1.5))  # 1.5秒缓存
         self.b, self.a = self.butter_bandpass(LOWCUT, HIGHCUT, SAMPLE_RATE, ORDER)
         self.forearm_filtered = {
             "filtered": None,
-            "forearm_EMG": None
+            "forearm_EMG": None,
+            "std_dev": None
         }
         self.upperarm_filtered = {
             "filtered": None,
-            "upperarm_EMG": None
+            "upperarm_EMG": None,
+            "std_dev": None
         }
         self.EMG_data = {
-            "forearm":None,
-            "upperarm":None
+            "forearm": None,
+            "upperarm": None,
+
         }
 
     def run(self):
@@ -57,29 +61,39 @@ class EMG_serial_reader(QThread):
             if self.ser.in_waiting > 0:
                 try:
                     data = self.ser.readline().decode('utf-8').strip()
-                    print("data, len(data)", data, len(data))
+
                     self.EMG_forearm_data, self.EMG_upperarm_data = map(int, data.split(','))
-                    self.buffer_forearm.append(self.EMG_forearm_data)
-                    self.buffer_upperarm.append(self.EMG_upperarm_data)
+                    self.forearm_data_np.append(self.EMG_forearm_data)
+                    self.upperarm_data_np.append(self.EMG_upperarm_data)
                     self.forearm_filtered["forearm_EMG"] = self.EMG_forearm_data
                     self.upperarm_filtered["upperarm_EMG"] = self.EMG_upperarm_data
-
-                    if len(self.buffer_forearm) >= self.WINDOW_SIZE:
-                        window_forearm = list(self.buffer_forearm)[-self.WINDOW_SIZE:]
-                        filtered_forearm = filtfilt(self.b, self.a, window_forearm)
-                        self.forearm_filtered["filtered"] = self.compute_features(filtered_forearm)
-
-                    if len(self.buffer_upperarm) >= self.WINDOW_SIZE:
-                        window_upperarm = list(self.buffer_upperarm)[-self.WINDOW_SIZE:]
-                        filtered_upperarm = filtfilt(self.b, self.a, window_upperarm)
-                        self.upperarm_filtered["filtered"] = self.compute_features(filtered_upperarm)
+                    len_upperarm_EMG = len(self.upperarm_data_np)
+                    if len_upperarm_EMG >= 60:
+                        forearm_data_np = np.array(self.forearm_data_np[-50:])
+                        upperarm_data_np = np.array(self.upperarm_data_np[-50:])
+                        self.forearm_std_dev = np.std(forearm_data_np)
+                        self.upperarm_std_dev = np.std(upperarm_data_np)
+                        self.forearm_filtered["std_dev"] = self.forearm_std_dev
+                        self.upperarm_filtered["std_dev"] = self.upperarm_std_dev
+                        # self.EMG_forearm_activity.setText(str(self.forearm_std_dev))
+                        # self.EMG_upperarm_activity.setText(str(self.upperarm_std_dev))
+                    # if len(self.buffer_forearm) >= self.WINDOW_SIZE:
+                    #     window_forearm = list(self.buffer_forearm)[-self.WINDOW_SIZE:]
+                    #     filtered_forearm = filtfilt(self.b, self.a, window_forearm)
+                    #     self.forearm_filtered["filtered"] = self.compute_features(filtered_forearm)
+                    #
+                    # if len(self.buffer_upperarm) >= self.WINDOW_SIZE:
+                    #     window_upperarm = list(self.buffer_upperarm)[-self.WINDOW_SIZE:]
+                    #     filtered_upperarm = filtfilt(self.b, self.a, window_upperarm)
+                    #     self.upperarm_filtered["filtered"] = self.compute_features(filtered_upperarm)
 
                     self.EMG_data["forearm"] = self.forearm_filtered
                     self.EMG_data["upperarm"] = self.upperarm_filtered
                     # print("EMG_data", self.EMG_data)
+                    # print("EMG_data", self.EMG_data)
                     self.data_ready.emit(self.EMG_data)  # 发出信号，传递数据
                 except:
-                    print("except: data, len(data)", data, len(data))
+                    print("except: data, len(data)")
         else:
             self.ser.close()
 
@@ -92,7 +106,6 @@ class EMG_serial_reader(QThread):
         high = highcut / nyq
         b, a = butter(order, [low, high], btype='band')
         return b, a
-
 
     def compute_features(self, signal):
         features = {}
@@ -123,7 +136,6 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
 
         # self.ser = serial.Serial()
 
-
     def init(self):
         self.checkbox.clicked.connect(self.port_check)
         self.open_button.clicked.connect(self.cybergear_open_1)
@@ -140,6 +152,9 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
 
         self.passivity_help_forearm_box.stateChanged.connect(self.passivity_help_forearm)
         self.passivity_help_upperarm_box.stateChanged.connect(self.passivity_help_upperarm)
+
+        self.active_help_forearm_box.stateChanged.connect(self.active_help_forearm)
+        self.active_help_upperarm_box.stateChanged.connect(self.active_help_upperarm)
         # self.timer_send_cb.stateChanged.connect(self.data_send_timer_1)
         # self.timer_send_cb_2.stateChanged.connect(self.data_send_timer_1)
         # 定时器接收数据
@@ -147,6 +162,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.close_button_EMG.clicked.connect(self.EMG_close)
 
         self.listWidget_2.currentRowChanged.connect(self.stackedWidget.setCurrentIndex)
+
     def init_timer(self):
         self.timer_draw = QTimer(self)  # 绘制图像
         self.timer_draw.timeout.connect(self.data_receive_draw)
@@ -160,11 +176,9 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.timer_help_mode = QTimer(self)  # 连续动态参数运动
         self.timer_help_mode.timeout.connect(self.help_mode_Time)
 
-
         self.timer_EMG = QTimer(self)
         self.timer_EMG.timeout.connect(self.EMG_read)
         self.open_button_EMG.stateChanged.connect(self.open_EMG)
-
 
     def init_QdoubleBox(self):
         self.speed_doubleSpinBox.setMinimum(0.0)
@@ -210,7 +224,6 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.forearm_gear.setBackground("#fbeaea")
         self.display_verticalLayout_1.addWidget(self.forearm_gear)
 
-
         self.motor2_speed_list = []
         self.motor2_position_list = []
         self.motor2_torque_list = []
@@ -222,10 +235,10 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         # self.upperarm_gear.setLa
         self.display_verticalLayout_2.addWidget(self.upperarm_gear)
 
-
         self.EMG_1_list = []
         self.EMG1_plot_widget = pyqtgraph.PlotWidget()
         self.EMG1_plot_widget.setBackground("#fbeaea")
+        self.EMG1_plot_widget.setYRange(-10, 4500)
         self.display_verticalLayout_3.addWidget(self.EMG1_plot_widget)
 
         self.figure_EMG_2, self.ax_EMG_2 = plt.subplots()
@@ -233,6 +246,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.EMG_2_list = []
         self.EMG2_plot_widget = pyqtgraph.PlotWidget()
         self.EMG2_plot_widget.setBackground("#fbeaea")
+        self.EMG2_plot_widget.setYRange(-10, 4500)
         self.display_verticalLayout_4.addWidget(self.EMG2_plot_widget)
 
     def init_StyleSheet(self):
@@ -268,8 +282,6 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                                             QPushButton:hover {background-color: #d69f9f;}
                                             QPushButton:pressed {background-color: #d69f9f;}""")
         # self.serial_selection_box.setStyleSheet("""QComboBox {background-color: #ee9bb1;border: 2px solid #c0c0c0;border-radius: 5px;""")
-
-
 
     def port_check(self):
         # 检测所有存在的串口，将信息存储在字典中
@@ -363,7 +375,6 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.timer_send.start(int(self.lineEdit_3.text()))
             self.lineEdit_3.setEnabled(False)
 
-
         if self.timer_send_cb_2.isChecked():
             self.motor2_mode = self.mode_box.currentText()
             if self.motor2_mode == "运控模式":
@@ -383,8 +394,6 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         if not self.timer_send_cb_2.isChecked() and not self.timer_send_cb.isChecked():
             self.timer_send.stop()
             self.lineEdit_3.setEnabled(True)
-
-
 
     def data_send(self):
         if self.timer_send_cb.isChecked():
@@ -510,7 +519,6 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         # self.lineEdit_5.setText(str(self.data_num_sended_2))
         print("gear状态（已关闭）")
 
-
     def data_receive_draw(self):
         """
         定时器开启
@@ -531,7 +539,6 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 self.motor1_speed_list.pop(0)
                 self.motor1_position_list.pop(0)
                 self.motor1_torque_list.pop(0)
-
 
         if self.timer_send_cb_2.isChecked():
             self.motor2_speed_list.append(self.motor2.result["vel"])
@@ -568,7 +575,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.serial_thread.data_ready.connect(self.update_data)  # 连接信号与槽
             self.serial_thread.start()  # 启动线程
             self.EMG_data = None
-            self.timer_EMG.start(10)
+            self.timer_EMG.start(1)
             self.forearm_EMG = []
             self.upperarm_EMG = []
             # except:
@@ -587,6 +594,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         :return:
         """
         self.EMG_data = data  # 更新标签显示接收
+
     def EMG_read(self):
         """
         定时器开启
@@ -594,7 +602,8 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         :return:
         """
         if self.EMG_data is not None:
-            self.EMG_forearm_data, self.EMG_upperarm_data = self.EMG_data["forearm"]["forearm_EMG"], self.EMG_data["upperarm"]["upperarm_EMG"]
+            self.EMG_forearm_data, self.EMG_upperarm_data = self.EMG_data["forearm"]["forearm_EMG"], \
+            self.EMG_data["upperarm"]["upperarm_EMG"]
             # print("EMG_forearm_data, EMG_upperarm_data", self.EMG_forearm_data, self.EMG_upperarm_data)
             self.forearm_EMG.append(self.EMG_forearm_data)
             self.upperarm_EMG.append(self.EMG_upperarm_data)
@@ -603,13 +612,13 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 self.EMG_forearm_cuurent.setText(str(self.forearm_EMG.pop(0)))
                 self.EMG_upperarm_current.setText(str(self.upperarm_EMG.pop(0)))
 
-            if len_upperarm_EMG >= 40:
-                forearm_data_np = np.array(self.forearm_EMG[-30:])
-                upperarm_data_np = np.array(self.upperarm_EMG[-30:])
-                self.forearm_std_dev = np.std(forearm_data_np)
-                self.upperarm_std_dev = np.std(upperarm_data_np)
-                self.EMG_forearm_activity.setText(str(self.forearm_std_dev))
-                self.EMG_upperarm_activity.setText(str(self.upperarm_std_dev))
+            # if len_upperarm_EMG >= 40:
+            #     forearm_data_np = np.array(self.forearm_EMG[-30:])
+            #     upperarm_data_np = np.array(self.upperarm_EMG[-30:])
+            #     self.forearm_std_dev = np.std(forearm_data_np)
+            #     self.upperarm_std_dev = np.std(upperarm_data_np)
+            self.EMG_forearm_activity.setText(str(self.EMG_data["forearm"]["std_dev"]))
+            self.EMG_upperarm_activity.setText(str(self.EMG_data["upperarm"]["std_dev"]))
             # try:
             self.EMG1_plot_widget.clear()
             self.EMG2_plot_widget.clear()
@@ -617,9 +626,10 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.EMG1_plot_widget.plot(self.forearm_EMG, pen=self.pen_red, name="EMG1")
             self.EMG2_plot_widget.plot(self.upperarm_EMG, pen=self.pen_red, name="EMG2")
 
-                # self.EMG_canvas_2.draw()
+            # self.EMG_canvas_2.draw()
             # except:
             #     print("pass")
+
     def EMG_close(self):
         """
         关闭读取肌电信号的线程
@@ -640,7 +650,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         前臂半主动助力模式
         打开助力模式定时器
         """
-        self.set_position_forearm=self.motor1.result["pos"]
+        self.set_position_forearm = self.motor1.result["pos"]
         if self.help_forearm_box.isChecked():
             self.timer_send_cb.setChecked(True)
             self.timer_help_mode.start(200)
@@ -688,9 +698,27 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         显示弹窗：助力模式参数选择：
         """
         if self.passivity_help_forearm_box.isChecked() and self.passivity_help_upperarm_box.isChecked():
-            self.speeed_passivity_help, ok = QtWidgets.QInputDialog.getDouble(self, "输入速度", "被动模式速度选择", value=0.4)
+            self.speeed_passivity_help, ok = QtWidgets.QInputDialog.getDouble(self, "输入速度", "被动模式速度选择",
+                                                                              value=0.4)
             print("value, ok", self.speeed_passivity_help, ok)
 
+    def active_help_forearm(self):
+        self.speeed_active_help_forearm = 0.5
+        self.position_active_help_forearm = 0.6
+        if self.active_help_forearm_box.isChecked():
+            self.timer_send_cb.setChecked(True)
+            self.timer_help_mode.start(200)
+        if not self.active_help_forearm_box.isChecked():
+            self.timer_send_cb.setChecked(False)
+
+    def active_help_upperarm(self):
+        self.speeed_active_help_upperarm = 0.4
+        self.position_active_help_upperarm = 0
+        if self.active_help_upperarm_box.isChecked():
+            self.timer_send_cb_2.setChecked(True)
+            self.timer_help_mode.start(200)
+        if not self.active_help_upperarm_box.isChecked():
+            self.timer_send_cb_2.setChecked(False)
 
     def help_mode_Time(self):
         if self.help_forearm_box.isChecked():
@@ -719,28 +747,28 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                         self.set_position_forearm = 0.5
                     self.posision_doubleSpinBox_1.setValue(self.set_position_forearm)
 
-            if self.help_upperarm_box.isChecked():
-                """
-                大臂肩关节助力
-                """
-                if self.open_button_EMG.isChecked():
-                    curren_position_motor2 = self.motor1.result["pos"]
-                    curren_torque_motor2 = self.motor1.result["torque"]
-                    # curren_position_motor2 = self.motor2.result["pos"]
-                    # curren_torque_motor2 = self.motor2.result["torque"]
-                    print("curren_position", curren_position_motor2)
-                    if self.upperarm_std_dev >= 200 and curren_torque_motor2 <= -0.7:
-                        self.speed_doubleSpinBox_2.setValue(0.23)
-                        set_position_upperarm = curren_torque_motor1 + 0.05
-                        if set_position_upperarm > 0.9:
-                            set_position_upperarm = 0.9
-                        self.position_doubleSpinBox_2.setValue(set_position_upperarm)
-                    elif self.forearm_std_dev >= 150 and curren_torque_motor1 >= 0.7:
-                        self.speed_doubleSpinBox_2.setValue(0.23)
-                        set_position_upperarm = curren_torque_motor1 - 0.02
-                        if set_position_upperarm < -0.2:
-                            set_position_upperarm = -0.2
-                        self.position_doubleSpinBox_2.setValue(set_position_upperarm)
+        if self.help_upperarm_box.isChecked():
+            """
+            大臂肩关节助力,半主动
+            """
+            if self.open_button_EMG.isChecked():
+                curren_position_motor2 = self.motor1.result["pos"]
+                curren_torque_motor2 = self.motor1.result["torque"]
+                # curren_position_motor2 = self.motor2.result["pos"]
+                # curren_torque_motor2 = self.motor2.result["torque"]
+                print("curren_position", curren_position_motor2)
+                if self.upperarm_std_dev >= 200 and curren_torque_motor2 <= -0.7:
+                    self.speed_doubleSpinBox_2.setValue(0.23)
+                    set_position_upperarm = curren_torque_motor1 + 0.05
+                    if set_position_upperarm > 0.9:
+                        set_position_upperarm = 0.9
+                    self.position_doubleSpinBox_2.setValue(set_position_upperarm)
+                elif self.forearm_std_dev >= 150 and curren_torque_motor1 >= 0.7:
+                    self.speed_doubleSpinBox_2.setValue(0.23)
+                    set_position_upperarm = curren_torque_motor1 - 0.02
+                    if set_position_upperarm < -0.2:
+                        set_position_upperarm = -0.2
+                    self.position_doubleSpinBox_2.setValue(set_position_upperarm)
 
         if self.passivity_help_forearm_box.isChecked():
             """
@@ -772,15 +800,74 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 self.passivity_set_position_upperarm = 0
             self.position_doubleSpinBox_2.setValue(self.passivity_set_position_upperarm)
 
-        print("help_mode_Time is open\n", "self.passivity_help_forearm_box.isChecked()",self.passivity_help_forearm_box.isChecked(), "\n"
-              "self.passivity_help_upperarm_box.isChecked()", self.passivity_help_upperarm_box.isChecked())
+        if self.active_help_upperarm_box.isChecked():
+            """
+            大大臂肩关节助力
+            主动模式
+            """
+            # curren_position_motor2 = self.motor2.result["pos"]
+            # curren_torque_motor2 = self.motor2.result["torque"]
+            if self.EMG_upperarm_data <= 200 and self.EMG_data["upperarm"]["std_dev"] <= 25:  # 初始位置
+                self.position_active_help_upperarm = -0.3
+                self.speeed_active_help_upperarm = 0.4
+
+            if 200 <= self.EMG_upperarm_data <= 350 and self.EMG_data["upperarm"]["std_dev"] <= 30:  # 过度插值位置
+                self.position_active_help_upperarm = 0.1
+                self.speeed_active_help_upperarm = 0.4
+
+            if 300 <= self.EMG_upperarm_data <= 500 and self.EMG_data["upperarm"]["std_dev"] >= 30:  # 中间位置
+                self.position_active_help_upperarm = 0.5
+                self.speeed_active_help_upperarm = 0.4
+
+            elif 500 <= self.EMG_upperarm_data <= 600 and 40 <= self.EMG_data["upperarm"]["std_dev"] <= 60:  # 过度插值位置
+                self.position_active_help_upperarm = 1.0
+                self.speeed_active_help_upperarm = 0.5
+
+            elif self.EMG_upperarm_data >= 600 and self.EMG_data["upperarm"]["std_dev"] >= 60:  # 末端位置
+                self.position_active_help_upperarm = 1.4
+                self.speeed_active_help_upperarm = 0.6
+
+            self.position_doubleSpinBox_2.setValue(self.position_active_help_upperarm)
+            self.speed_doubleSpinBox_2.setValue(self.speeed_active_help_upperarm)
+
+        if self.active_help_forearm_box.isChecked():
+            """
+            肘关节肩关节助力
+            主动模式
+            """
+            if 200 <= self.EMG_forearm_data <= 600 and self.EMG_data["forearm"]["std_dev"] <= 20:  # 初始位置
+                self.speeed_active_help_forearm = 0.7
+                self.position_active_help_forearm = 0.6
+
+            if 700 <= self.EMG_forearm_data <= 900 and 20 <= self.EMG_data["forearm"]["std_dev"] <= 35:  # 插值
+                self.speeed_active_help_forearm = 0.7
+                self.position_active_help_forearm = 1.0
+
+            if 1000 <= self.EMG_forearm_data <= 1200 and self.EMG_data["forearm"]["std_dev"] <= 30:  # 中间位置
+                self.speeed_active_help_forearm = 0.8
+                self.position_active_help_forearm = 1.5
+
+            if 1300 <= self.EMG_forearm_data <= 1500 and 30 <= self.EMG_data["forearm"]["std_dev"] <= 50:  # 插值
+                self.speeed_active_help_forearm = 0.8
+                self.position_active_help_forearm = 2.0
+
+            if self.EMG_forearm_data >= 1400 and self.EMG_data["forearm"]["std_dev"] >= 50:  # 完全曲肘
+                self.speeed_active_help_forearm = 0.8
+                self.position_active_help_forearm = 2.5
+
+            self.posision_doubleSpinBox_1.setValue(self.position_active_help_forearm)
+            self.speed_doubleSpinBox.setValue(self.speeed_active_help_forearm)
+
+        # print("help_mode_Time is open\n", "self.passivity_help_forearm_box.isChecked()",
+        #       self.passivity_help_forearm_box.isChecked(), "\n"
+        #                                                    "self.passivity_help_upperarm_box.isChecked()",
+        #       self.passivity_help_upperarm_box.isChecked())
 
     def switchPage(self, index):
         self.stackedWidget.setCurrentIndex(index)
+
     def depth_vision(self):
         ...
-
-
 
 
 if __name__ == '__main__':
@@ -789,4 +876,4 @@ if __name__ == '__main__':
     myshow.show()
     sys.exit(app.exec_())
 # 写到这真累啊
-#。。。
+# 。。。

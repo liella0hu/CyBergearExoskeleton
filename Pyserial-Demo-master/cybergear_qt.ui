@@ -829,7 +829,7 @@
       <rect>
        <x>650</x>
        <y>720</y>
-       <width>171</width>
+       <width>181</width>
        <height>41</height>
       </rect>
      </property>
@@ -861,6 +861,32 @@
      </property>
      <property name="text">
       <string>后臂助力模式被动</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="active_help_upperarm_box">
+     <property name="geometry">
+      <rect>
+       <x>650</x>
+       <y>810</y>
+       <width>181</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>后臂助力模式主动</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="active_help_forearm_box">
+     <property name="geometry">
+      <rect>
+       <x>650</x>
+       <y>770</y>
+       <width>181</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>前臂助力模式主动</string>
      </property>
     </widget>
    </widget>
