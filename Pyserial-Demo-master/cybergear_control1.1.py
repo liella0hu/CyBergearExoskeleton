@@ -5,13 +5,14 @@ import serial
 import serial.tools.list_ports
 import threading
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal
+from PyQt5.QtWidgets import QMessageBox, QFileDialog
+from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from cybergear_control_ui import Ui_Form
 from serial_control_interface import SerialControllerInterface, CmdModes, RunModes
 import pyqtgraph
+import pandas as pd
 from scipy import signal
 from scipy.signal import butter, filtfilt
 from collections import deque
@@ -20,6 +21,7 @@ from collections import deque
 class EMG_serial_reader(QThread):
     # data_ready = pyqtSignal(str)  # 定义一个信号，用于当数据准备好时发送
     data_ready = pyqtSignal(dict)
+    data_record = pyqtSignal(list)
 
     def __init__(self, port, baudrate):
         super().__init__()
@@ -27,6 +29,8 @@ class EMG_serial_reader(QThread):
         self.baudrate = baudrate
         self.ser = None  # 串口对象，将在run方法中初始化
         self.running = False  # 线程运行标志
+        self.recording = False  # 记录标志
+        self.record_angle = None  # 记录角度
         SAMPLE_RATE = 1000  # 采样率(Hz)
         LOWCUT = 20  # 带通下限频率
         HIGHCUT = 400  # 带通上限频率
@@ -50,8 +54,10 @@ class EMG_serial_reader(QThread):
         self.EMG_data = {
             "forearm": None,
             "upperarm": None,
-
         }
+        self.data_buffer = []
+        self.csv_header = ["timestamp", "forearm_sEMG", "upperarm_sEMG", "joint_angle"]
+        self.receive_msg = None
 
     def run(self):
         self.running = True
@@ -59,46 +65,54 @@ class EMG_serial_reader(QThread):
         self.ser = serial.Serial(self.port, self.baudrate, timeout=1)
         while self.running:
             if self.ser.in_waiting > 0:
-                try:
-                    data = self.ser.readline().decode('utf-8').strip()
+                # try:
+                data = self.ser.readline().decode('utf-8').strip()
 
-                    self.EMG_forearm_data, self.EMG_upperarm_data = map(int, data.split(','))
-                    self.forearm_data_np.append(self.EMG_forearm_data)
-                    self.upperarm_data_np.append(self.EMG_upperarm_data)
-                    self.forearm_filtered["forearm_EMG"] = self.EMG_forearm_data
-                    self.upperarm_filtered["upperarm_EMG"] = self.EMG_upperarm_data
-                    len_upperarm_EMG = len(self.upperarm_data_np)
-                    if len_upperarm_EMG >= 60:
-                        forearm_data_np = np.array(self.forearm_data_np[-50:])
-                        upperarm_data_np = np.array(self.upperarm_data_np[-50:])
-                        self.forearm_std_dev = np.std(forearm_data_np)
-                        self.upperarm_std_dev = np.std(upperarm_data_np)
-                        self.forearm_filtered["std_dev"] = self.forearm_std_dev
-                        self.upperarm_filtered["std_dev"] = self.upperarm_std_dev
-                        # self.EMG_forearm_activity.setText(str(self.forearm_std_dev))
-                        # self.EMG_upperarm_activity.setText(str(self.upperarm_std_dev))
-                    # if len(self.buffer_forearm) >= self.WINDOW_SIZE:
-                    #     window_forearm = list(self.buffer_forearm)[-self.WINDOW_SIZE:]
-                    #     filtered_forearm = filtfilt(self.b, self.a, window_forearm)
-                    #     self.forearm_filtered["filtered"] = self.compute_features(filtered_forearm)
-                    #
-                    # if len(self.buffer_upperarm) >= self.WINDOW_SIZE:
-                    #     window_upperarm = list(self.buffer_upperarm)[-self.WINDOW_SIZE:]
-                    #     filtered_upperarm = filtfilt(self.b, self.a, window_upperarm)
-                    #     self.upperarm_filtered["filtered"] = self.compute_features(filtered_upperarm)
+                self.EMG_forearm_data, self.EMG_upperarm_data = map(int, data.split(','))
+                self.forearm_data_np.append(self.EMG_forearm_data)
+                self.upperarm_data_np.append(self.EMG_upperarm_data)
+                self.forearm_filtered["forearm_EMG"] = self.EMG_forearm_data
+                self.upperarm_filtered["upperarm_EMG"] = self.EMG_upperarm_data
+                len_upperarm_EMG = len(self.upperarm_data_np)
+                if len_upperarm_EMG >= 60:
+                    forearm_data_np = np.array(self.forearm_data_np[-50:])
+                    upperarm_data_np = np.array(self.upperarm_data_np[-50:])
+                    self.forearm_std_dev = np.std(forearm_data_np)
+                    self.upperarm_std_dev = np.std(upperarm_data_np)
+                    self.forearm_filtered["std_dev"] = self.forearm_std_dev
+                    self.upperarm_filtered["std_dev"] = self.upperarm_std_dev
+                    self.upperarm_data_np.pop()
+                    self.forearm_data_np.pop()
 
-                    self.EMG_data["forearm"] = self.forearm_filtered
-                    self.EMG_data["upperarm"] = self.upperarm_filtered
-                    # print("EMG_data", self.EMG_data)
-                    # print("EMG_data", self.EMG_data)
-                    self.data_ready.emit(self.EMG_data)  # 发出信号，传递数据
-                except:
-                    print("except: data, len(data)")
+                self.EMG_data["forearm"] = self.forearm_filtered
+                self.EMG_data["upperarm"] = self.upperarm_filtered
+                self.data_ready.emit(self.EMG_data)  # 发出信号，传递数据
+                if self.recording is True:  # 记录数据
+                    self.data_buffer.append([time.time(), 
+                                            self.EMG_forearm_data, 
+                                            self.EMG_upperarm_data, 
+                                            self.receive_msg["record_angle"]
+                                            ])
+                if self.recording is False and len(self.data_buffer) >= 100:
+                    df = pd.DataFrame(self.data_buffer, columns=self.csv_header)
+                    df.to_csv(self.receive_msg["file_path"], mode='a', index=False)
+                    self.data_buffer.clear()
+                    print("saved")
+                # except:
+                #     print("except: data, len(data)")
         else:
             self.ser.close()
 
     def stop(self):
         self.running = False  # 设置运行标志为False，以退出循环
+
+    def handle_cmd(self, cmd):
+        if cmd["flag"] is True:
+            self.recording = True
+        elif cmd["flag"] is False:
+            self.recording = False
+        self.receive_msg = cmd
+        print("cmd, self.recording\n", cmd, self.recording)
 
     def butter_bandpass(self, lowcut, highcut, fs, order=5):
         nyq = 0.5 * fs
@@ -124,6 +138,7 @@ class EMG_serial_reader(QThread):
 
 
 class CybergearControl(QtWidgets.QWidget, Ui_Form):
+    msg_recordEMG_cmd = pyqtSignal(dict)
     def __init__(self):
         super(CybergearControl, self).__init__()
         self.setupUi(self)
@@ -158,6 +173,9 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         # self.timer_send_cb.stateChanged.connect(self.data_send_timer_1)
         # self.timer_send_cb_2.stateChanged.connect(self.data_send_timer_1)
         # 定时器接收数据
+
+        self.open_csv_button.clicked.connect(self.open_EMG_csv)
+        self.record_button_forearm.stateChanged.connect(self.send_cmd_record_forearm)
 
         self.close_button_EMG.clicked.connect(self.EMG_close)
 
@@ -210,11 +228,15 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.pen_blue_line = pyqtgraph.mkPen(color="#a4def4")
         self.pen_SlateBlue_line = pyqtgraph.mkPen(color="#ac80ef")
         self.pen_OrangeRed_line = pyqtgraph.mkPen(color="#f36b2b")
+        self.pen_EMG_forearm = pyqtgraph.mkPen(color="#f36b2b")
+        self.pen_EMG_upperarm = pyqtgraph.mkPen(color="#f36b2b")
 
         self.pen_red.setWidth(2)
         self.pen_blue_line.setWidth(2)
         self.pen_SlateBlue_line.setWidth(2)
         self.pen_OrangeRed_line.setWidth(2)
+        self.pen_EMG_forearm.setWidth(2)
+        self.pen_EMG_upperarm.setWidth(2)
 
         self.motor1_speed_list = []
         self.motor1_position_list = []
@@ -239,6 +261,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.EMG1_plot_widget = pyqtgraph.PlotWidget()
         self.EMG1_plot_widget.setBackground("#fbeaea")
         self.EMG1_plot_widget.setYRange(-10, 4500)
+        self.EMG1_plot_widget.addLegend()
         self.display_verticalLayout_3.addWidget(self.EMG1_plot_widget)
 
         self.figure_EMG_2, self.ax_EMG_2 = plt.subplots()
@@ -282,6 +305,10 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                                             QPushButton:hover {background-color: #d69f9f;}
                                             QPushButton:pressed {background-color: #d69f9f;}""")
         # self.serial_selection_box.setStyleSheet("""QComboBox {background-color: #ee9bb1;border: 2px solid #c0c0c0;border-radius: 5px;""")
+
+    def init_thread_communication(self):
+        self.msg_recordEMG_cmd.connect(self.EMG_reader.handle_cmd)
+
 
     def port_check(self):
         # 检测所有存在的串口，将信息存储在字典中
@@ -578,6 +605,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.timer_EMG.start(1)
             self.forearm_EMG = []
             self.upperarm_EMG = []
+            self.msg_recordEMG_cmd.connect(self.serial_thread.handle_cmd)
             # except:
             #     QMessageBox.information(self, "error", "串口选错了哥们")
             #     self.open_button_EMG.setChecked(False)
@@ -621,10 +649,13 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.EMG_upperarm_activity.setText(str(self.EMG_data["upperarm"]["std_dev"]))
             # try:
             self.EMG1_plot_widget.clear()
-            self.EMG2_plot_widget.clear()
+            # self.EMG2_plot_widget.clear()
 
-            self.EMG1_plot_widget.plot(self.forearm_EMG, pen=self.pen_red, name="EMG1")
-            self.EMG2_plot_widget.plot(self.upperarm_EMG, pen=self.pen_red, name="EMG2")
+            self.EMG1_plot_widget.plot(self.forearm_EMG, pen=self.pen_EMG_forearm, name="EMG1")
+            
+            self.EMG1_plot_widget.plot(self.upperarm_EMG, pen=self.pen_EMG_upperarm, name="EMG2")
+
+            # self.EMG2_plot_widget.plot(self.upperarm_EMG, pen=self.pen_red, name="EMG2")
 
             # self.EMG_canvas_2.draw()
             # except:
@@ -720,7 +751,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         if not self.active_help_upperarm_box.isChecked():
             self.timer_send_cb_2.setChecked(False)
 
-    def help_mode_Time(self):
+    def help_mode_Time(self):  
         if self.help_forearm_box.isChecked():
             """
             助力模式主函数，半主动
@@ -830,7 +861,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.position_doubleSpinBox_2.setValue(self.position_active_help_upperarm)
             self.speed_doubleSpinBox_2.setValue(self.speeed_active_help_upperarm)
 
-        if self.active_help_forearm_box.isChecked():
+        if self.active_help_forearm_box.isChecked():  # 前臂肩关节助力
             """
             肘关节肩关节助力
             主动模式
@@ -863,7 +894,20 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         #                                                    "self.passivity_help_upperarm_box.isChecked()",
         #       self.passivity_help_upperarm_box.isChecked())
 
-    def switchPage(self, index):
+    def open_EMG_csv(self):  # 打开csv文件
+        self.file_path, _ = QFileDialog.getOpenFileName(self, "Open CSV File", "", "CSV Files (*.csv)")
+
+
+    def send_cmd_record_forearm(self):  # 发送指令给EMG线程，开始记录肌电信号
+        send_dict = {"flag": None, "record_angle": int(self.angle_predict_comboox_forearm.currentText()), "file_path": self.file_path}
+        if self.record_button_forearm.isChecked():
+            send_dict["flag"] = True
+            self.msg_recordEMG_cmd.emit(send_dict)
+        else:
+            send_dict["flag"] = False
+            self.msg_recordEMG_cmd.emit(send_dict)
+
+    def switchPage(self, index):  # 切换页面
         self.stackedWidget.setCurrentIndex(index)
 
     def depth_vision(self):

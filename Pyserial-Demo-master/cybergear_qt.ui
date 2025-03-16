@@ -634,7 +634,7 @@
        <x>1150</x>
        <y>660</y>
        <width>501</width>
-       <height>251</height>
+       <height>261</height>
       </rect>
      </property>
      <property name="title">
@@ -656,15 +656,8 @@
       <property name="spacing">
        <number>10</number>
       </property>
-      <item row="2" column="2">
-       <widget class="QDoubleSpinBox" name="speed_doubleSpinBox_EMG"/>
-      </item>
-      <item row="7" column="2">
-       <widget class="QPushButton" name="close_button_EMG">
-        <property name="text">
-         <string>关闭检测</string>
-        </property>
-       </widget>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="serial_selection_box_EMG"/>
       </item>
       <item row="7" column="0">
        <widget class="QCheckBox" name="open_button_EMG">
@@ -680,34 +673,34 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="serial_selection_box_EMG"/>
+      <item row="2" column="2">
+       <widget class="QDoubleSpinBox" name="angle_record_doubleBox_forearm"/>
       </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="s1__lb_15">
+      <item row="7" column="2">
+       <widget class="QPushButton" name="close_button_EMG">
         <property name="text">
-         <string>波特率:</string>
+         <string>关闭检测</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="s1__lb_16">
+      <item row="5" column="2">
+       <widget class="QLabel" name="forearm_activity_5">
         <property name="text">
-         <string>滤波模式</string>
+         <string>upperarm活动程度：</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="s1__lb_18">
+      <item row="5" column="3">
+       <widget class="QLabel" name="EMG_upperarm_activity">
         <property name="text">
-         <string>forearm当前值：</string>
+         <string>汪汪汪</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="3">
-       <widget class="QLabel" name="s1__lb_17">
+      <item row="5" column="1">
+       <widget class="QLabel" name="EMG_forearm_activity">
         <property name="text">
-         <string>信号阈值</string>
+         <string>汪汪汪</string>
         </property>
        </widget>
       </item>
@@ -725,35 +718,76 @@
         </item>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="mode_box_3">
-        <item>
-         <property name="text">
-          <string>位置模式</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>运控模式</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>速度模式</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>电流模式</string>
-         </property>
-        </item>
-       </widget>
-      </item>
       <item row="4" column="3">
        <widget class="QLabel" name="EMG_upperarm_current">
         <property name="text">
          <string>喵喵喵</string>
         </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="s1__lb_15">
+        <property name="text">
+         <string>波特率:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="angle_record_forearm">
+        <property name="text">
+         <string>肘关节角度记录</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="s1__lb_18">
+        <property name="text">
+         <string>forearm当前值：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="angle_predict_comboox_forearm">
+        <item>
+         <property name="text">
+          <string>180</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>160</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>140</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>120</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>80</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>60</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>40</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item row="4" column="2">
@@ -777,24 +811,71 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
-       <widget class="QLabel" name="EMG_forearm_activity">
+      <item row="3" column="0">
+       <widget class="QLabel" name="angle_record_upperarm">
         <property name="text">
-         <string>汪汪汪</string>
+         <string>肩关节角度记录</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="2">
-       <widget class="QLabel" name="forearm_activity_5">
+      <item row="3" column="1">
+       <widget class="QComboBox" name="angle_predict_comboox_upperarm">
+        <item>
+         <property name="text">
+          <string>180</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>160</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>140</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>120</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>80</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>60</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>40</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QDoubleSpinBox" name="angle_record_doubleBox_upperarm"/>
+      </item>
+      <item row="3" column="3">
+       <widget class="QCheckBox" name="record_button_upperarm">
         <property name="text">
-         <string>upperarm活动程度：</string>
+         <string>写入csv</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="3">
-       <widget class="QLabel" name="EMG_upperarm_activity">
+      <item row="2" column="3">
+       <widget class="QCheckBox" name="record_button_forearm">
         <property name="text">
-         <string>汪汪汪</string>
+         <string>写入csv</string>
         </property>
        </widget>
       </item>
@@ -887,6 +968,19 @@
      </property>
      <property name="text">
       <string>前臂助力模式主动</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="open_csv_button">
+     <property name="geometry">
+      <rect>
+       <x>1710</x>
+       <y>690</y>
+       <width>115</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>选择csv文件</string>
      </property>
     </widget>
    </widget>
