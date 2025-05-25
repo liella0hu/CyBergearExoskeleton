@@ -65,41 +65,41 @@ class EMG_serial_reader(QThread):
         self.ser = serial.Serial(self.port, self.baudrate, timeout=1)
         while self.running:
             if self.ser.in_waiting > 0:
-                # try:
-                data = self.ser.readline().decode('utf-8').strip()
+                try:
+                    data = self.ser.readline().decode('utf-8').strip()
 
-                self.EMG_forearm_data, self.EMG_upperarm_data = map(int, data.split(','))
-                self.forearm_data_np.append(self.EMG_forearm_data)
-                self.upperarm_data_np.append(self.EMG_upperarm_data)
-                self.forearm_filtered["forearm_EMG"] = self.EMG_forearm_data
-                self.upperarm_filtered["upperarm_EMG"] = self.EMG_upperarm_data
-                len_upperarm_EMG = len(self.upperarm_data_np)
-                if len_upperarm_EMG >= 60:
-                    forearm_data_np = np.array(self.forearm_data_np[-50:])
-                    upperarm_data_np = np.array(self.upperarm_data_np[-50:])
-                    self.forearm_std_dev = np.std(forearm_data_np)
-                    self.upperarm_std_dev = np.std(upperarm_data_np)
-                    self.forearm_filtered["std_dev"] = self.forearm_std_dev
-                    self.upperarm_filtered["std_dev"] = self.upperarm_std_dev
-                    self.upperarm_data_np.pop()
-                    self.forearm_data_np.pop()
+                    self.EMG_forearm_data, self.EMG_upperarm_data, self.EMG_shoulder = map(int, data.split(','))
+                    self.forearm_data_np.append(self.EMG_forearm_data)
+                    self.upperarm_data_np.append(self.EMG_upperarm_data)
+                    self.forearm_filtered["forearm_EMG"] = self.EMG_forearm_data
+                    self.upperarm_filtered["upperarm_EMG"] = self.EMG_upperarm_data
+                    len_upperarm_EMG = len(self.upperarm_data_np)
+                    if len_upperarm_EMG >= 60:
+                        forearm_data_np = np.array(self.forearm_data_np[-50:])
+                        upperarm_data_np = np.array(self.upperarm_data_np[-50:])
+                        self.forearm_std_dev = np.std(forearm_data_np)
+                        self.upperarm_std_dev = np.std(upperarm_data_np)
+                        self.forearm_filtered["std_dev"] = self.forearm_std_dev
+                        self.upperarm_filtered["std_dev"] = self.upperarm_std_dev
+                        self.upperarm_data_np.pop()
+                        self.forearm_data_np.pop()
 
-                self.EMG_data["forearm"] = self.forearm_filtered
-                self.EMG_data["upperarm"] = self.upperarm_filtered
-                self.data_ready.emit(self.EMG_data)  # 发出信号，传递数据
-                if self.recording is True:  # 记录数据
-                    self.data_buffer.append([time.time(), 
-                                            self.EMG_forearm_data, 
-                                            self.EMG_upperarm_data, 
-                                            self.receive_msg["record_angle"]
-                                            ])
-                if self.recording is False and len(self.data_buffer) >= 100:
-                    df = pd.DataFrame(self.data_buffer, columns=self.csv_header)
-                    df.to_csv(self.receive_msg["file_path"], mode='a', index=False)
-                    self.data_buffer.clear()
-                    print("saved")
-                # except:
-                #     print("except: data, len(data)")
+                    self.EMG_data["forearm"] = self.forearm_filtered
+                    self.EMG_data["upperarm"] = self.upperarm_filtered
+                    self.data_ready.emit(self.EMG_data)  # 发出信号，传递数据
+                    if self.recording is True:  # 记录数据
+                        self.data_buffer.append([time.time(), 
+                                                self.EMG_forearm_data, 
+                                                self.EMG_upperarm_data, 
+                                                self.receive_msg["record_angle"]
+                                                ])
+                    if self.recording is False and len(self.data_buffer) >= 100:
+                        df = pd.DataFrame(self.data_buffer, columns=self.csv_header)
+                        df.to_csv(self.receive_msg["file_path"], mode='a', index=False)
+                        self.data_buffer.clear()
+                        print("saved")
+                except:
+                    print("except: data, len(data)")
         else:
             self.ser.close()
 
@@ -147,6 +147,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.init_QdoubleBox()
         self.init_matplotlib_canvas()
         self.init_StyleSheet()
+        self.init_thread_cybergear()
         self.setWindowTitle("Cybergear")
 
         # self.ser = serial.Serial()
@@ -176,7 +177,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
 
         self.open_csv_button.clicked.connect(self.open_EMG_csv)
         self.record_button_forearm.stateChanged.connect(self.send_cmd_record_forearm)
-
+        self.record_button_upperarm.stateChanged.connect(self.send_cmd_record_forearm)
         self.close_button_EMG.clicked.connect(self.EMG_close)
 
         self.listWidget_2.currentRowChanged.connect(self.stackedWidget.setCurrentIndex)
@@ -228,8 +229,8 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.pen_blue_line = pyqtgraph.mkPen(color="#a4def4")
         self.pen_SlateBlue_line = pyqtgraph.mkPen(color="#ac80ef")
         self.pen_OrangeRed_line = pyqtgraph.mkPen(color="#f36b2b")
-        self.pen_EMG_forearm = pyqtgraph.mkPen(color="#f36b2b")
-        self.pen_EMG_upperarm = pyqtgraph.mkPen(color="#f36b2b")
+        self.pen_EMG_forearm = pyqtgraph.mkPen(color="#7CFC00")
+        self.pen_EMG_upperarm = pyqtgraph.mkPen(color="#008B00")
 
         self.pen_red.setWidth(2)
         self.pen_blue_line.setWidth(2)
@@ -309,6 +310,11 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
     def init_thread_communication(self):
         self.msg_recordEMG_cmd.connect(self.EMG_reader.handle_cmd)
 
+    def init_thread_cybergear(self):
+        self.cybergear_data_send_thread = threading.Thread(target=self.data_send_thread)
+        # self.data_send_thread_flag = False
+        # self.cybergear_data_send_thread.start()
+
 
     def port_check(self):
         # 检测所有存在的串口，将信息存储在字典中
@@ -344,6 +350,8 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.motor1.enable_motor()
         self.open_button.setEnabled(False)
         self.close_button.setEnabled(True)
+        self.data_send_thread_flag = True
+        self.cybergear_data_send_thread.start()
         # self.formGroupBox1.setTitle("串口状态（已开启）")
 
     def cyberger_execute_1(self):
@@ -381,9 +389,10 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.lineEdit_3.setEnabled(True)
         # self.data_num_received = 0
         # self.lineEdit.setText(str(self.data_num_received))
-        # self.data_num_sended = 0
-        # self.lineEdit_2.setText(str(self.data_num_sended))
-        print("gear状态（已关闭）")
+        self.data_send_thread_flag = False
+        time.sleep(0.1)
+        self.cybergear_data_send_thread = threading.Thread(target=self.data_send_thread)
+        print("gear状态(已关闭)")
 
     def data_send_timer_1(self):
         if self.timer_send_cb.isChecked():
@@ -399,7 +408,8 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 # self.motor1.set_run_mode(RunModes.CURRENT_MODE)
             else:
                 ...
-            self.timer_send.start(int(self.lineEdit_3.text()))
+            # self.timer_send.start(int(self.lineEdit_3.text()))
+            # self.cybergear_data_send_thread.start()
             self.lineEdit_3.setEnabled(False)
 
         if self.timer_send_cb_2.isChecked():
@@ -415,11 +425,13 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 # self.motor1.set_run_mode(RunModes.CURRENT_MODE)
             else:
                 ...
-            self.timer_send.start(int(self.lineEdit_3.text()))
+            # self.timer_send.start(int(self.lineEdit_3.text()))
+            # self.cybergear_data_send_thread.start()
             self.lineEdit_3.setEnabled(False)
             # self.data_send_flag_2 = True
         if not self.timer_send_cb_2.isChecked() and not self.timer_send_cb.isChecked():
-            self.timer_send.stop()
+            # self.timer_send.stop()
+            # self.cybergear_data_send_thread.stop()
             self.lineEdit_3.setEnabled(True)
 
     def data_send(self):
@@ -433,13 +445,13 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 if self.motor1_mode == "运控模式":
                     # self.motor1.set_run_mode(RunModes.CONTROL_MODE)
                     self.motor1.send_motor_control_command(torque=self.motor1_torque,
-                                                           target_angle=self.motor1_position,
-                                                           target_velocity=self.motor1_speed,
-                                                           Kp=10, Kd=2)
+                                                            target_angle=self.motor1_position,
+                                                            target_velocity=self.motor1_speed,
+                                                            Kp=10, Kd=2)
                 elif self.motor1_mode == "位置模式":
                     # self.motor1.set_run_mode(RunModes.POSITION_MODE)
                     self.motor1.set_motor_position_control(limit_spd=self.motor1_speed,
-                                                           loc_ref=self.motor1_position)
+                                                            loc_ref=self.motor1_position)
                 elif self.motor1_mode == "速度模式":
                     # self.motor1.set_run_mode(RunModes.SPEED_MODE)
                     self.motor1.write_single_param(param_name="limit_spd", value=self.motor1_speed)
@@ -462,13 +474,13 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                 if self.motor2_mode == "运控模式":
                     # self.motor1.set_run_mode(RunModes.CONTROL_MODE)
                     self.motor2.send_motor_control_command(torque=self.motor2_torque,
-                                                           target_angle=self.motor2_position,
-                                                           target_velocity=self.motor2_speed,
-                                                           Kp=10, Kd=2)
+                                                            target_angle=self.motor2_position,
+                                                            target_velocity=self.motor2_speed,
+                                                            Kp=10, Kd=2)
                 elif self.motor2_mode == "位置模式":
                     # self.motor1.set_run_mode(RunModes.POSITION_MODE)
                     self.motor2.set_motor_position_control(limit_spd=self.motor2_speed,
-                                                           loc_ref=self.motor2_position)
+                                                            loc_ref=self.motor2_position)
                 elif self.motor2_mode == "速度模式":
                     # self.motor1.set_run_mode(RunModes.SPEED_MODE)
                     self.motor2.write_single_param(param_name="limit_spd", value=self.motor2_speed)
@@ -480,6 +492,12 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
                     ...
             except:
                 print("data_send 2 fail ")
+
+    def data_send_thread(self):
+        # while True:
+        while self.data_send_thread_flag:
+            self.data_send()
+            time.sleep(0.01)
 
     def data_receive(self):
         try:
@@ -506,6 +524,9 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         self.motor2.enable_motor()
         self.open_button_2.setEnabled(False)
         self.close_button_2.setEnabled(True)
+        if self.data_send_thread_flag is False:
+            self.cybergear_data_send_thread.start()
+            self.data_send_thread_flag = True
         # self.formGroupBox1.setTitle("串口状态（已开启）")
 
     def cyberger_execute_2(self):
@@ -542,8 +563,7 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
         # self.lineEdit_6.setEnabled(True)
         # self.data_num_received_2 = 0
         # self.lineEdit_4.setText(str(self.data_num_received_2))
-        # self.data_num_sended_2 = 0
-        # self.lineEdit_5.setText(str(self.data_num_sended_2))
+        self.cybergear_data_send_thread = threading.Thread(target=self.data_send_thread)
         print("gear状态（已关闭）")
 
     def data_receive_draw(self):
@@ -651,10 +671,17 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.EMG1_plot_widget.clear()
             # self.EMG2_plot_widget.clear()
 
-            self.EMG1_plot_widget.plot(self.forearm_EMG, pen=self.pen_EMG_forearm, name="EMG1")
+            self.EMG1_plot_widget.plot(self.forearm_EMG, pen=self.pen_EMG_forearm, name="forearm")
             
-            self.EMG1_plot_widget.plot(self.upperarm_EMG, pen=self.pen_EMG_upperarm, name="EMG2")
-
+            self.EMG1_plot_widget.plot(self.upperarm_EMG, pen=self.pen_EMG_upperarm, name="upperarm")
+            if self.record_button_upperarm.isChecked():
+                send_dict = {"flag": None, "record_angle": self.motor1.result["pos"], "file_path": self.file_path}
+                send_dict["flag"] = True
+                self.msg_recordEMG_cmd.emit(send_dict)
+            # elif not(self.record_button_upperarm.isChecked()):
+            #     send_dict = {"flag": None, "record_angle": int(self.angle_predict_comboox_forearm.currentIndex()), "file_path": self.file_path}
+            #     send_dict["flag"] = False
+            #     self.msg_recordEMG_cmd.emit(send_dict)
             # self.EMG2_plot_widget.plot(self.upperarm_EMG, pen=self.pen_red, name="EMG2")
 
             # self.EMG_canvas_2.draw()
@@ -899,11 +926,20 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
 
 
     def send_cmd_record_forearm(self):  # 发送指令给EMG线程，开始记录肌电信号
-        send_dict = {"flag": None, "record_angle": int(self.angle_predict_comboox_forearm.currentText()), "file_path": self.file_path}
         if self.record_button_forearm.isChecked():
+            send_dict = {"flag": None, "record_angle": int(self.angle_predict_comboox_forearm.currentIndex()), "file_path": self.file_path}
             send_dict["flag"] = True
             self.msg_recordEMG_cmd.emit(send_dict)
-        else:
+        elif not(self.record_button_forearm.isChecked()):
+            send_dict = {"flag": None, "record_angle": int(self.angle_predict_comboox_forearm.currentIndex()), "file_path": self.file_path}
+            send_dict["flag"] = False
+            self.msg_recordEMG_cmd.emit(send_dict)
+        if self.record_button_upperarm.isChecked():
+            send_dict = {"flag": None, "record_angle": self.motor1.result["pos"], "file_path": self.file_path}
+            send_dict["flag"] = True
+            self.msg_recordEMG_cmd.emit(send_dict)
+        elif not(self.record_button_upperarm.isChecked()):
+            send_dict = {"flag": None, "record_angle": int(self.angle_predict_comboox_forearm.currentIndex()), "file_path": self.file_path}
             send_dict["flag"] = False
             self.msg_recordEMG_cmd.emit(send_dict)
 

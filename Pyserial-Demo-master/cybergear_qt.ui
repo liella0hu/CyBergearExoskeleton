@@ -735,7 +735,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="angle_record_forearm">
         <property name="text">
-         <string>肘关节角度记录</string>
+         <string>运动意图记录</string>
         </property>
        </widget>
       </item>
@@ -750,42 +750,22 @@
        <widget class="QComboBox" name="angle_predict_comboox_forearm">
         <item>
          <property name="text">
-          <string>180</string>
+          <string>运动困难肘</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>160</string>
+          <string>小幅度运动肘</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>140</string>
+          <string>正常运动肘</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>120</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>80</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>60</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>40</string>
+          <string>大幅度运动肘</string>
          </property>
         </item>
        </widget>
@@ -814,7 +794,7 @@
       <item row="3" column="0">
        <widget class="QLabel" name="angle_record_upperarm">
         <property name="text">
-         <string>肩关节角度记录</string>
+         <string>关节角度记录</string>
         </property>
        </widget>
       </item>
@@ -981,6 +961,19 @@
      </property>
      <property name="text">
       <string>选择csv文件</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="screenshot">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>850</y>
+       <width>211</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>screenshot截图</string>
      </property>
     </widget>
    </widget>
