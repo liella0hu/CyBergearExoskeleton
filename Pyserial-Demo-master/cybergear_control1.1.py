@@ -838,8 +838,8 @@ class CybergearControl(QtWidgets.QWidget, Ui_Form):
             self.speed_doubleSpinBox.setValue(self.speeed_passivity_help - 0.1)
             # set_position_forearm = 0.8
             if 0.45 <= curren_position_motor1 <= 0.75:
-                self.passivity_set_position_forearm = 2.2
-            if 2.15 <= curren_position_motor1 <= 2.25:
+                self.passivity_set_position_forearm = 1.9
+            if 1.8 <= curren_position_motor1 <= 2.0:
                 self.passivity_set_position_forearm = 0.6
             self.posision_doubleSpinBox_1.setValue(self.passivity_set_position_forearm)
 
